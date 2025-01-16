@@ -412,7 +412,11 @@ public class UserController {
         @ApiResponse(responseCode = "401", description = HttpStatuses.UNAUTHORIZED),
     })
     @GetMapping("/findByEmail")
-    public ResponseEntity<UserVO> findByEmail(@RequestParam String email) {
+    public ResponseEntity<?> findByEmail(@RequestParam  String email) {
+
+        if (!email.matches("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Your entered email has invalid format!");
+        }
         return ResponseEntity.status(HttpStatus.OK).body(userService.findByEmail(email));
     }
 
