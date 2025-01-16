@@ -406,6 +406,18 @@ class UserControllerTest {
     }
 
     @Test
+    void findByEmailTestReturns404() throws Exception {
+
+        String notExistedEmail="124125@gmail.com";
+
+        mockMvc.perform(get(userLink + "/findByEmail")
+                        .param("email", notExistedEmail))
+                .andDo(print())
+                .andExpect(status().isNotFound());
+
+    }
+
+    @Test
     void findByIdTest() throws Exception {
         UserVO userVO = ModelUtils.getUserVO();
         when(userService.findById(1L)).thenReturn(userVO);

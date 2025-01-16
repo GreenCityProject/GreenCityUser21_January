@@ -414,10 +414,16 @@ public class UserController {
     @GetMapping("/findByEmail")
     public ResponseEntity<?> findByEmail(@RequestParam  String email) {
 
+        // # issue 274, returning bad request in case of malformed email
         if (!email.matches("[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Your entered email has invalid format!");
         }
-        return ResponseEntity.status(HttpStatus.OK).body(userService.findByEmail(email));
+        // #issue 27, returning status 404 in case of having not found a user with a given email
+        UserVO foundUserV0 = userService.findByEmail(email);
+        if(foundUserV0 == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with email: "+email+" does not exist !");
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(foundUserV0);
     }
 
     /**
