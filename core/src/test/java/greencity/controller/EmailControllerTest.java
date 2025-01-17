@@ -14,6 +14,8 @@ import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,9 +23,13 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
+import java.security.Principal;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
@@ -124,6 +130,63 @@ class EmailControllerTest {
 
         verify(emailService).sendHabitNotification(notification.getName(), notification.getEmail());
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "Joe Doe, Test1@gmail.com, 200",
+            "'','',400",
+            "1111, validemail@gmail.com, 400",
+             "Joe, Test1@mail..com, 400",
+            "1111, Test1mail.com, 400",
+            "'', Test1@gmail.com, 400",
+            "Joe Doe, '', 400"
+    })
+    void sendHabitNotification(String name, String email, int expectedStatus) throws Exception {
+
+        Principal principal = ()->"test111@gmail.com";
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", name, email);
+
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .principal(principal)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().is(expectedStatus))
+                .andDo(print());
+
+        if(expectedStatus == 200)
+            verify(emailService, times(1)).sendHabitNotification(name, email);
+        else
+            verify(emailService, times(0)).sendHabitNotification(anyString(), anyString());
+    }
+
+    @Test
+    void sendHabitNotificationAuthenticationReturns401() throws Exception {
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", "Luis", "louis@gmail.com");
+
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andDo(print());
+    }
+
+    @Test
+    void sendHabitNotificationAuthenticationReturns200() throws Exception {
+
+        Principal principal = ()->"test111@gmail.com";
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", "Luis", "louis@gmail.com");
+
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .principal(principal)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andDo(print());
+    }
+
 
     private void mockPerform(String content, String subLink) throws Exception {
         mockMvc.perform(post(LINK + subLink)
