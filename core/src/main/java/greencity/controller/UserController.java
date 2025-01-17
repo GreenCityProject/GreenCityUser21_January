@@ -599,10 +599,13 @@ public class UserController {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = HttpStatuses.OK),
         @ApiResponse(responseCode = "400", description = HttpStatuses.BAD_REQUEST),
-        @ApiResponse(responseCode = "403", description = HttpStatuses.FORBIDDEN)
+        @ApiResponse(responseCode = "401", description = HttpStatuses.UNAUTHORIZED)
     })
     @GetMapping("/lang")
     public ResponseEntity<String> getUserLang(@ApiIgnore @CurrentUser UserVO userVO) {
+        if (userVO == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized");
+        }
         return ResponseEntity.status(HttpStatus.OK).body(userVO.getLanguageVO().getCode());
     }
 
