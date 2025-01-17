@@ -23,6 +23,7 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import java.security.Principal;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -142,9 +143,12 @@ class EmailControllerTest {
     })
     void sendHabitNotification(String name, String email, int expectedStatus) throws Exception {
 
+        Principal principal = ()->"test111@gmail.com";
+
         String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", name, email);
 
         mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .principal(principal)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().is(expectedStatus))
@@ -154,6 +158,33 @@ class EmailControllerTest {
             verify(emailService, times(1)).sendHabitNotification(name, email);
         else
             verify(emailService, times(0)).sendHabitNotification(anyString(), anyString());
+    }
+
+    @Test
+    void sendHabitNotificationAuthenticationReturns401() throws Exception {
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", "Luis", "louis@gmail.com");
+
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isUnauthorized())
+                .andDo(print());
+    }
+
+    @Test
+    void sendHabitNotificationAuthenticationReturns200() throws Exception {
+
+        Principal principal = ()->"test111@gmail.com";
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", "Luis", "louis@gmail.com");
+
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .principal(principal)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())
+                .andDo(print());
     }
 
 

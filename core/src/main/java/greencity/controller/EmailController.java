@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +80,8 @@ public class EmailController {
      */
     @PostMapping("/sendHabitNotification")
     public ResponseEntity<Object> sendHabitNotification(@RequestBody @Valid SendHabitNotification sendHabitNotification,
-                                                        BindingResult bindingResult) {
+                                                        BindingResult bindingResult,
+                                                        Principal principal) {
 
         if(bindingResult.hasErrors()) {
 
@@ -87,6 +89,10 @@ public class EmailController {
             bindingResult.getFieldErrors().forEach(err->validationExceptionDtoList
                     .add(new ValidationExceptionDto(err)));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationExceptionDtoList);
+        }
+
+        if(principal== null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please log in to proceed !");
         }
 
         emailService.sendHabitNotification(sendHabitNotification.getName(), sendHabitNotification.getEmail());
