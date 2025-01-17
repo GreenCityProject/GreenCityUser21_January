@@ -4,6 +4,7 @@ import greencity.constant.HttpStatuses;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
 import greencity.dto.violation.UserViolationMailDto;
+import greencity.exception.handler.ValidationExceptionDto;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
@@ -11,11 +12,17 @@ import greencity.service.EmailService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/email")
@@ -71,7 +78,17 @@ public class EmailController {
      * @author Taras Kavkalo
      */
     @PostMapping("/sendHabitNotification")
-    public ResponseEntity<Object> sendHabitNotification(@RequestBody SendHabitNotification sendHabitNotification) {
+    public ResponseEntity<Object> sendHabitNotification(@RequestBody @Valid SendHabitNotification sendHabitNotification,
+                                                        BindingResult bindingResult) {
+
+        if(bindingResult.hasErrors()) {
+
+            List<ValidationExceptionDto> validationExceptionDtoList = new ArrayList<>();
+            bindingResult.getFieldErrors().forEach(err->validationExceptionDtoList
+                    .add(new ValidationExceptionDto(err)));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationExceptionDtoList);
+        }
+
         emailService.sendHabitNotification(sendHabitNotification.getName(), sendHabitNotification.getEmail());
         return ResponseEntity.status(HttpStatus.OK).build();
     }
