@@ -21,6 +21,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -34,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class EmailControllerTest {
     private static final String LINK = "/email";
     private MockMvc mockMvc;
@@ -169,6 +172,40 @@ class EmailControllerTest {
             verify(emailService, times(0)).sendHabitNotification(anyString(), anyString());
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "Joe Doe, Test1@gmail.com, 200",
+            "'','',400",
+            "1111, validemail@gmail.com, 400",
+            "Joe, Test1@mail..com, 400",
+            "1111, Test1mail.com, 400",
+            "'', Test1@gmail.com, 400",
+            "Joe Doe, '', 400"
+    })
+    void testSendHabitNotificationStatuses200And400(String name, String email, int expectedStatus) throws Exception {
+
+        Principal principal = ()->"test@test.com";
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", name, email);
+
+        if(expectedStatus ==200) {
+            when(userService.findByEmail("Test1@gmail.com")).thenReturn(new UserVO());
+            doNothing().when(emailService).sendHabitNotification(name, email);
+        }
+
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .principal(principal)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().is(expectedStatus))
+                .andDo(print());
+
+        if(expectedStatus == 200)
+            verify(emailService, times(1)).sendHabitNotification(name, email);
+        else
+            verify(emailService, times(0)).sendHabitNotification(anyString(), anyString());
+    }
+
 
     private void mockPerform(String content, String subLink) throws Exception {
         mockMvc.perform(post(LINK + subLink)
@@ -176,6 +213,8 @@ class EmailControllerTest {
             .content(content))
             .andExpect(status().isOk());
     }
+
+
 
     @Test
     void sendUserViolationEmailTest() throws Exception {

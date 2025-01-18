@@ -18,8 +18,7 @@ import lombok.ToString;
 public class SendHabitNotification implements Serializable {
 
     @NotBlank(message = "Name must not be blank")
-    @Pattern(regexp = "^[\\p{L}'][\\p{L}' -]*[\\p{L}']$", message = "Name must contain valid characters and spaces")
-    @Size(min = 2, message = "Name should contain at least two letters")
+    @Pattern(regexp = "^[A-Za-z\\s-'`]+$", message = "Name must contain valid characters and spaces")
     private String name;
 
     @Email(message = "Email must have a correct format")
