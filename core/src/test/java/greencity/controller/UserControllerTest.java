@@ -12,13 +12,7 @@ import greencity.dto.PageableAdvancedDto;
 import greencity.dto.filter.FilterUserDto;
 import greencity.dto.language.LanguageVO;
 import greencity.dto.ubs.UbsTableCreationDto;
-import greencity.dto.user.UserManagementUpdateDto;
-import greencity.dto.user.UserManagementVO;
-import greencity.dto.user.UserManagementViewDto;
-import greencity.dto.user.UserProfileDtoRequest;
-import greencity.dto.user.UserStatusDto;
-import greencity.dto.user.UserUpdateDto;
-import greencity.dto.user.UserVO;
+import greencity.dto.user.*;
 import greencity.enums.EmailNotification;
 import greencity.enums.Role;
 import greencity.repository.UserRepo;
@@ -34,14 +28,14 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -52,6 +46,9 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -618,4 +615,41 @@ class UserControllerTest {
             .andExpect(jsonPath("$.length()").value(3))
             .andExpect(jsonPath("$", Matchers.containsInAnyOrder("Lviv", "Kyiv", "Kharkiv")));
     }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1, 403",
+            "2, 200"
+    })
+    public void testGetUserProfileStatistics(long id, int expectedStatusCode) throws Exception {
+
+        String email="testuser@domain.com";
+        String name="Joe";
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn(email);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+
+        UserVO mockUser = new UserVO();
+        mockUser.setId(2L);
+        mockUser.setEmail(email);
+        mockUser.setName(name);
+
+        when(userService.findByEmail(email)).thenReturn(mockUser);
+        when(userService.getUserProfileStatistics(2L)).thenReturn(new UserProfileStatisticsDto());
+
+        mockMvc.perform(get(userLink+"/{userId}/profileStatistics/", id))
+                .andExpect(status().is(expectedStatusCode));
+
+        if(expectedStatusCode == 200)
+            verify(userService, times(1)).getUserProfileStatistics(id);
+        else
+            verify(userService, times(0)).getUserProfileStatistics(id);
+
+    }
+
 }
