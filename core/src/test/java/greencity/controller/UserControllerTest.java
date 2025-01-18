@@ -23,14 +23,16 @@ import greencity.enums.EmailNotification;
 import greencity.enums.Role;
 import greencity.repository.UserRepo;
 import greencity.service.UserService;
-import java.security.Principal;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
+import java.lang.reflect.Method;
+import java.security.Principal;
+import java.util.*;
+
+
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -444,6 +446,23 @@ class UserControllerTest {
             .content(""))
             .andExpect(status().isBadRequest());
         verify(userService, times(0)).updateUser(1L, ModelUtils.getUserManagementUpdateDto());
+    }
+
+    @Test
+    void updateUserManagementResponsesTest() throws Exception {
+        Method method = UserController.class.getMethod("updateUserManagement", Long.class, UserManagementUpdateDto.class);
+
+        ApiResponses apiResponses = method.getAnnotation(ApiResponses.class);
+        Assertions.assertNotNull(apiResponses, "Method should be annotated with @ApiResponses");
+
+        ApiResponse[] responses = apiResponses.value();
+        Assertions.assertEquals(responses.length, 4, "Method should have 4 responses");
+
+        List<String> responseCodes = Arrays.stream(responses)
+                .map(ApiResponse::responseCode)
+                .toList();
+
+        Assertions.assertEquals(List.of("200", "400", "401", "403"), responseCodes, "The code statuses don't match");
     }
 
     @Test
