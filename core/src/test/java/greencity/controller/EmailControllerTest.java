@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
+import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,10 +25,10 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import java.security.Principal;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -38,6 +40,9 @@ class EmailControllerTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private EmailController emailController;
@@ -142,9 +147,17 @@ class EmailControllerTest {
     })
     void sendHabitNotification(String name, String email, int expectedStatus) throws Exception {
 
+        Principal principal = ()->"test@test.com";
+
         String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", name, email);
 
+        if(expectedStatus ==200) {
+            when(userService.findByEmail("Test1@gmail.com")).thenReturn(new UserVO());
+            doNothing().when(emailService).sendHabitNotification(name, email);
+        }
+
         mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .principal(principal)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().is(expectedStatus))

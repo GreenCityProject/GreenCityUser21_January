@@ -1,9 +1,8 @@
 package greencity.message;
 
 import java.io.Serializable;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +18,8 @@ import lombok.ToString;
 public class SendHabitNotification implements Serializable {
 
     @NotBlank(message = "Name must not be blank")
-    @Pattern(regexp = "^[a-zA-Z ]+$", message = "Name must contain only alphabetic characters and spaces")
+    @Pattern(regexp = "^[\\p{L}'][\\p{L}' -]*[\\p{L}']$", message = "Name must contain valid characters and spaces")
+    @Size(min = 2, message = "Name should contain at least two letters")
     private String name;
 
     @Email(message = "Email must have a correct format")
