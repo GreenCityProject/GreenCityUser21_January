@@ -9,6 +9,7 @@ import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -31,6 +32,9 @@ import java.util.List;
 public class EmailController {
     @Autowired
     private final EmailService emailService;
+
+    @Autowired
+    private final UserService userService;
 
     /**
      * Method for sending news for users who subscribed for updates.
@@ -90,9 +94,13 @@ public class EmailController {
                     .add(new ValidationExceptionDto(err)));
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationExceptionDtoList);
         }
-
-        if(principal== null){
+        if(principal==null){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Please log in to proceed !");
+        }
+
+        if(userService.findByEmail(sendHabitNotification.getEmail()) == null){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User with email: "+
+                    sendHabitNotification.getEmail()+" is not found!");
         }
 
         emailService.sendHabitNotification(sendHabitNotification.getName(), sendHabitNotification.getEmail());

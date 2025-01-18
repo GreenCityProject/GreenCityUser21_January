@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
+import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
 import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
+import greencity.service.UserService;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,9 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.security.Principal;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,6 +36,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class EmailControllerTest {
     private static final String LINK = "/email";
     private MockMvc mockMvc;
+
+    @Mock
+    private UserService userService;
 
     @Mock
     private EmailService emailService;
@@ -173,18 +176,51 @@ class EmailControllerTest {
     }
 
     @Test
-    void sendHabitNotificationAuthenticationReturns200() throws Exception {
+    void sendHabitNotificationAuthenticationReturns200WhenAuthenticatedAndEmailFound() throws Exception {
 
         Principal principal = ()->"test111@gmail.com";
 
-        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", "Luis", "louis@gmail.com");
+        String name= "Louis";
+        String email= "louis@gmail.com";
+
+        UserVO userVO = new UserVO();
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", name, email);
+
+        when(userService.findByEmail(email)).thenReturn(userVO);
+
+       doNothing().when(emailService).sendHabitNotification(name, email);
 
         mockMvc.perform(post(LINK + "/sendHabitNotification")
                         .principal(principal)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andDo(print());
+
+        verify(emailService, times(1)).sendHabitNotification(name, email);
+    }
+
+
+    @Test
+    void sendHabitNotificationAuthenticationReturns404WhenAuthenticatedButEmailNotFound() throws Exception {
+
+        Principal principal = ()->"test111@gmail.com";
+        String name= "Louis";
+        String email= "louis@gmail.com";
+
+        String requestBody = String.format("{\"name\":\"%s\",\"email\":\"%s\"}", name, email);
+
+        mockMvc.perform(post(LINK + "/sendHabitNotification")
+                        .principal(principal)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isNotFound())
+                .andDo(print());
+
+        verify(emailService, times(0)).sendHabitNotification(name, email);
+
     }
 
 
