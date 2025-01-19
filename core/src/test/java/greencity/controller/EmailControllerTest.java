@@ -7,7 +7,6 @@ import greencity.dto.econews.EcoNewsForSendEmailDto;
 import greencity.dto.notification.NotificationDto;
 import greencity.dto.user.UserVO;
 import greencity.dto.violation.UserViolationMailDto;
-import greencity.message.SendChangePlaceStatusEmailMessage;
 import greencity.message.SendHabitNotification;
 import greencity.message.SendReportEmailMessage;
 import greencity.service.EmailService;
@@ -104,23 +103,45 @@ class EmailControllerTest {
             message.getEmailNotification());
     }
 
-    @Test
-    void changePlaceStatus() throws Exception {
-        String content = "{" +
-            "\"authorEmail\":\"string\"," +
-            "\"authorFirstName\":\"string\"," +
-            "\"placeName\":\"string\"," +
-            "\"placeStatus\":\"string\"" +
-            "}";
+    @ParameterizedTest
+    @CsvSource({
+            "Admin1@gmail.com, Joe, 'Some place', unregistered, 200",
+            "'', '', '', '', 400",
+            "Admin1gmail.com, Joe, 'Some place', unregistered, 400",
+            "Admin1@gmail.com, joe, 'Some place', '', 400",
+            "Admin1@gmail.com, Joe, 'some place', '', 400",
+            "Admin1@gmail..com, joe, 'Some place', '', 400",
+            "Admin1@gmail.com, Joe, 'Some place', unregisteredunregisteredunregistered, 400",
+            "Admin1@gmail.com, J, 'Some place', unregisteredunregisteredunregistered, 400",
+            "Admin1@gmail.com, Joe, s, unregistered, 400",
+            "Admin1@gmail.com, '', 'Some-place', unregistered, 400",
+            "Admin1@gmail.com, Joe, '', unregistered, 400",
+            "'', Joe, 'Some place', unregistered, 400",
+    })
+    void testChangePlaceStatusReturns200_Or_400(String email, String authorName, String placeName,
+                                     String placeStatus, int statusCode) throws Exception {
 
-        mockPerform(content, "/changePlaceStatus");
+        String content = String.format("{" +
+            "\"authorEmail\":\"%s\"," +
+            "\"authorFirstName\":\"%s\"," +
+            "\"placeName\":\"%s\"," +
+            "\"placeStatus\":\"%s\"" +
+            "}", email, authorName, placeName, placeStatus);
 
-        SendChangePlaceStatusEmailMessage message =
-            new ObjectMapper().readValue(content, SendChangePlaceStatusEmailMessage.class);
+        if(statusCode == 200)
+            doNothing().when(emailService).sendChangePlaceStatusEmail(authorName, placeName, placeStatus, email);
 
-        verify(emailService).sendChangePlaceStatusEmail(
-            message.getAuthorFirstName(), message.getPlaceName(),
-            message.getPlaceStatus(), message.getAuthorEmail());
+        mockMvc.perform(post(LINK+ "/changePlaceStatus").contentType(MediaType.APPLICATION_JSON)
+                        .content(content))
+                .andExpect(status().is(statusCode))
+                .andDo(print());
+
+        if(statusCode==200)
+            verify(emailService, times(1)).sendChangePlaceStatusEmail(authorName, placeName,
+                placeStatus, email);
+        else
+            verify(emailService, times(0)).sendChangePlaceStatusEmail(authorName, placeName,
+                    placeStatus, email);
     }
 
     @Test

@@ -64,7 +64,11 @@ public class EmailController {
      * @author Taras Kavkalo
      */
     @PostMapping("/changePlaceStatus")
-    public ResponseEntity<Object> changePlaceStatus(@RequestBody SendChangePlaceStatusEmailMessage message) {
+    public ResponseEntity<Object> changePlaceStatus(@RequestBody @Valid SendChangePlaceStatusEmailMessage message,
+                                                    BindingResult bindingResult) {
+        if(bindingResult.hasErrors())
+            return giveUserInputErrors(bindingResult);
+
         emailService.sendChangePlaceStatusEmail(message.getAuthorFirstName(), message.getPlaceName(),
             message.getPlaceStatus(), message.getAuthorEmail());
         return ResponseEntity.status(HttpStatus.OK).build();
@@ -126,5 +130,13 @@ public class EmailController {
         @RequestParam("email") String email) {
         emailService.sendNotificationByEmail(notification, email);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    private ResponseEntity<Object> giveUserInputErrors(BindingResult bindingResult){
+
+            List<ValidationExceptionDto> validationExceptionDtoList = new ArrayList<>();
+            bindingResult.getFieldErrors().forEach(err->validationExceptionDtoList
+                    .add(new ValidationExceptionDto(err)));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(validationExceptionDtoList);
     }
 }
