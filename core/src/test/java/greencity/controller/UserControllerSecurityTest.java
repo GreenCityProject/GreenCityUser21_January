@@ -28,6 +28,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -144,6 +147,20 @@ public class UserControllerSecurityTest {
         mvc.perform(put(userLink + "/" + id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(userManagementUpdateDto)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "ADMIN")
+    void updateRole200Test() throws Exception {
+        long id = 1L;
+
+        Map<String, String> map = new HashMap<>();
+        map.put("role", "ROLE_USER");
+
+        mvc.perform(patch(userLink + "/" + id + "/role")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(map)))
                 .andExpect(status().isOk());
     }
 }
