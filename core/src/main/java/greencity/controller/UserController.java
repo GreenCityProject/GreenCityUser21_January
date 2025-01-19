@@ -710,7 +710,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = HttpStatuses.FORBIDDEN),
     })
     @PostMapping()
-    public ResponseEntity<UserVO> saveUser(@RequestBody @CurrentUser UserVO userVO) {
+    public ResponseEntity<UserVO> saveUser(@RequestBody UserVO userVO) {
         return ResponseEntity.status(HttpStatus.OK).body(userService.save(userVO));
     }
 
