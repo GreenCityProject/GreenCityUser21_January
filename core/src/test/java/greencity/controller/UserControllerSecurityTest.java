@@ -5,10 +5,12 @@ import com.jayway.jsonpath.JsonPath;
 import greencity.config.SecurityConfig;
 import greencity.dto.language.LanguageVO;
 import greencity.dto.ownsecurity.OwnSecurityVO;
+import greencity.dto.user.UserManagementUpdateDto;
 import greencity.dto.user.UserUpdateDto;
 import greencity.dto.user.UserVO;
 import greencity.dto.verifyemail.VerifyEmailVO;
 import greencity.enums.EmailNotification;
+import greencity.enums.Role;
 import greencity.enums.UserStatus;
 import greencity.security.jwt.JwtTool;
 import greencity.service.EmailService;
@@ -64,6 +66,7 @@ public class UserControllerSecurityTest {
         user.setId(1L);
         user.setName("John");
         user.setEmail("john.doe@gmail.com");
+        user.setRole(Role.ROLE_ADMIN);
 
         VerifyEmailVO verifyEmail = new VerifyEmailVO();
         verifyEmail.setId(1L);
@@ -96,6 +99,7 @@ public class UserControllerSecurityTest {
         userVO.setShowEcoPlace(true);
         userVO.setShowShoppingList(true);
         userVO.setLanguageVO(language);
+        userVO.setRole(Role.ROLE_ADMIN);
 
         when(userService.save(userVO)).thenReturn(userVO);
 
@@ -122,6 +126,24 @@ public class UserControllerSecurityTest {
         mvc.perform(patch(userLink)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(userUpdateDto)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "ADMIN")
+    void updateUserManagement200Test() throws Exception {
+        long id = 1L;
+
+        UserManagementUpdateDto userManagementUpdateDto = new UserManagementUpdateDto();
+        userManagementUpdateDto.setUserCredo("I believe in unicorns");
+        userManagementUpdateDto.setUserStatus(UserStatus.CREATED);
+        userManagementUpdateDto.setEmail("testemail@gmail.com");
+        userManagementUpdateDto.setName("Anna");
+        userManagementUpdateDto.setRole(Role.ROLE_USER);
+
+        mvc.perform(put(userLink + "/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(userManagementUpdateDto)))
                 .andExpect(status().isOk());
     }
 }
