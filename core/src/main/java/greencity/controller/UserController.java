@@ -230,9 +230,8 @@ public class UserController {
     })
     @PatchMapping
     public ResponseEntity<UserUpdateDto> updateUser(@Valid @RequestBody UserUpdateDto dto,
-                                                    @ApiIgnore @AuthenticationPrincipal Principal principal) {
-        String email = principal.getName();
-        return ResponseEntity.status(HttpStatus.OK).body(userService.update(dto, email));
+                                                    @ApiIgnore @AuthenticationPrincipal String principal) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.update(dto, principal));
     }
 
     /**

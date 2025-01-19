@@ -5,6 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import greencity.config.SecurityConfig;
 import greencity.dto.language.LanguageVO;
 import greencity.dto.ownsecurity.OwnSecurityVO;
+import greencity.dto.user.UserUpdateDto;
 import greencity.dto.user.UserVO;
 import greencity.dto.verifyemail.VerifyEmailVO;
 import greencity.enums.EmailNotification;
@@ -26,8 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
@@ -110,5 +110,18 @@ public class UserControllerSecurityTest {
 
         Assertions.assertEquals("Kharkiv", JsonPath.read(result.getResponse().getContentAsString(), "$.city"));
         verify(userService, times(1)).save((userVO));
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "ADMIN")
+    void updateUser200Test() throws Exception {
+        UserUpdateDto userUpdateDto = new UserUpdateDto();
+        userUpdateDto.setName("Anna");
+        userUpdateDto.setEmailNotification(EmailNotification.DISABLED);
+
+        mvc.perform(patch(userLink)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(userUpdateDto)))
+                .andExpect(status().isOk());
     }
 }
