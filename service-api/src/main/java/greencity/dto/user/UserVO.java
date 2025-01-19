@@ -45,6 +45,7 @@ public class UserVO {
 
     private String refreshTokenKey;
 
+    @ToString.Exclude
     private OwnSecurityVO ownSecurity;
 
     private String profilePicturePath;
