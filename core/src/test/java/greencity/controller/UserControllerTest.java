@@ -59,13 +59,16 @@ import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequ
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -393,6 +396,18 @@ class UserControllerTest {
     }
 
     @Test
+    void findByEmailTestReturns400() throws Exception {
+
+        String malformedEmail="124125gmail.com";
+
+        mockMvc.perform(get(userLink + "/findByEmail")
+                        .param("email", malformedEmail))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+    }
+
+    @Test
     void findByIdTest() throws Exception {
         UserVO userVO = ModelUtils.getUserVO();
         when(userService.findById(1L)).thenReturn(userVO);
@@ -489,7 +504,7 @@ class UserControllerTest {
             .principal(principal)
             .content(objectMapper.writeValueAsString(ModelUtils.getUserVO())))
             .andExpect(status().isOk())
-            .andDo(MockMvcResultHandlers.print())
+            .andDo(print())
             .andExpect(jsonPath("$.uuid").value("testUuid"));
 
     }
