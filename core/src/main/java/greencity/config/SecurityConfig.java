@@ -96,7 +96,7 @@ public class SecurityConfig {
                                 SC_UNAUTHORIZED, "Authorize first."))
                         .accessDeniedHandler(new CustomAccessDeniedHandler()))
                 .authorizeHttpRequests(req -> req
-                        .requestMatchers("/static/css/**", "/static/img/**").permitAll()
+                        .requestMatchers("/static/css/**", "/static/img/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
                                 "/v2/api-docs/**",
