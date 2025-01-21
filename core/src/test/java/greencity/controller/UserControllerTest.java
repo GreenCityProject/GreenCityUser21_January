@@ -24,6 +24,7 @@ import greencity.enums.Role;
 import greencity.repository.UserRepo;
 import greencity.service.UserService;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -37,11 +38,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -51,12 +47,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.messaging.handler.invocation.HandlerMethodArgumentResolver;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -64,6 +66,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.test.context.support.WithMockUser;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -119,6 +122,42 @@ class UserControllerTest {
             .content("{}"))
             .andExpect(status().isBadRequest());
     }
+
+//    @Test
+//    void updateUserLastActivityTime_shouldReturn403_whenAccessForbidden() throws Exception {
+//        // Arrange
+//        String email = "testuser@domain.com";
+//        String name = "Joe";
+//
+//        // Мок для користувача
+//        UserVO mockUser = new UserVO();
+//        mockUser.setId(2L);
+//        mockUser.setEmail(email);
+//        mockUser.setName(name);
+//
+//        // Мок для UserService
+//        when(userService.findByEmail(email)).thenReturn(mockUser);
+//
+//        // Мок для @CurrentUser
+//        HandlerMethodArgumentResolver mockResolver = mock(HandlerMethodArgumentResolver.class);
+//        when(mockResolver.supportsParameter(any())).thenReturn(true);
+//        when(mockResolver.resolveArgument(any(), any(), any(), any())).thenReturn(mockUser);
+//
+//        mockMvc = MockMvcBuilders.standaloneSetup(userController)
+//                .setCustomArgumentResolvers(mockResolver)
+//                .build();
+//
+//        // Мок для LastActivityTime
+//        LocalDateTime lastActivityTime = LocalDateTime.now();
+//
+//        // Імітація помилки доступу
+//        doThrow(new SecurityException("Access is forbidden"))
+//                .when(userService).updateUserLastActivityTime(mockUser.getId(), lastActivityTime);
+//
+//        // Act & Assert
+//        mockMvc.perform(put("/updateUserLastActivityTime/" + lastActivityTime))
+//                .andExpect(status().isForbidden());
+//    }
 
     @Test
     void updateRoleTest() throws Exception {
