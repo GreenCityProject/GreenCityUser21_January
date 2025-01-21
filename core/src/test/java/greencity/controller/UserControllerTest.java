@@ -123,42 +123,6 @@ class UserControllerTest {
             .andExpect(status().isBadRequest());
     }
 
-//    @Test
-//    void updateUserLastActivityTime_shouldReturn403_whenAccessForbidden() throws Exception {
-//        // Arrange
-//        String email = "testuser@domain.com";
-//        String name = "Joe";
-//
-//        // Мок для користувача
-//        UserVO mockUser = new UserVO();
-//        mockUser.setId(2L);
-//        mockUser.setEmail(email);
-//        mockUser.setName(name);
-//
-//        // Мок для UserService
-//        when(userService.findByEmail(email)).thenReturn(mockUser);
-//
-//        // Мок для @CurrentUser
-//        HandlerMethodArgumentResolver mockResolver = mock(HandlerMethodArgumentResolver.class);
-//        when(mockResolver.supportsParameter(any())).thenReturn(true);
-//        when(mockResolver.resolveArgument(any(), any(), any(), any())).thenReturn(mockUser);
-//
-//        mockMvc = MockMvcBuilders.standaloneSetup(userController)
-//                .setCustomArgumentResolvers(mockResolver)
-//                .build();
-//
-//        // Мок для LastActivityTime
-//        LocalDateTime lastActivityTime = LocalDateTime.now();
-//
-//        // Імітація помилки доступу
-//        doThrow(new SecurityException("Access is forbidden"))
-//                .when(userService).updateUserLastActivityTime(mockUser.getId(), lastActivityTime);
-//
-//        // Act & Assert
-//        mockMvc.perform(put("/updateUserLastActivityTime/" + lastActivityTime))
-//                .andExpect(status().isForbidden());
-//    }
-
     @Test
     void updateRoleTest() throws Exception {
         Principal principal = mock(Principal.class);

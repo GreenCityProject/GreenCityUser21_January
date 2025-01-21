@@ -44,7 +44,7 @@ public class CustomUserControllerTest {
         LocalDateTime localDateTime = LocalDateTime.now();
 
         UserStatusDto userStatusDto = new UserStatusDto();
-        mvc.perform(put(userLink + "updateUserLastActivityTime/" + localDateTime)
+        mvc.perform(put(userLink + "/updateUserLastActivityTime/" + localDateTime)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(userStatusDto)))
                 .andExpect(status().isForbidden());
