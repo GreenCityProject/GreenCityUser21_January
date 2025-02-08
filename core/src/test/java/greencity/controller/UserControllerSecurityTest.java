@@ -11,11 +11,13 @@ import greencity.dto.user.UserVO;
 import greencity.dto.verifyemail.VerifyEmailVO;
 import greencity.enums.EmailNotification;
 import greencity.enums.Role;
+import greencity.dto.user.UserStatusDto;
 import greencity.enums.UserStatus;
 import greencity.security.jwt.JwtTool;
 import greencity.service.EmailService;
 import greencity.service.UserService;
 import org.junit.jupiter.api.Assertions;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +35,7 @@ import java.util.Map;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(SpringExtension.class)
@@ -60,6 +63,16 @@ public class UserControllerSecurityTest {
     void getUserByPrincipal401Test() throws Exception {
         mvc.perform(get(userLink))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "USER")
+    void updateStatusForbiddenTest() throws Exception {
+        UserStatusDto userStatusDto = new UserStatusDto();
+        mvc.perform(patch(userLink + "/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(userStatusDto)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -160,6 +173,22 @@ public class UserControllerSecurityTest {
         mvc.perform(patch(userLink + "/" + id + "/role")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(map)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "ADMIN")
+    void updateStatusOkTest() throws Exception {
+        UserStatusDto userStatusDto = new UserStatusDto();
+        userStatusDto.setId(6L);
+        userStatusDto.setUserStatus(UserStatus.CREATED);
+
+        when(userService.updateStatus(userStatusDto.getId(), userStatusDto.getUserStatus(), "user"))
+                .thenReturn(userStatusDto);
+
+        mvc.perform(patch(userLink + "/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(userStatusDto)))
                 .andExpect(status().isOk());
     }
 }
