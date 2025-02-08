@@ -59,9 +59,10 @@ public class UserServiceImpl implements UserService {
     /**
      * Autowired mapper.
      */
-    private final ModelMapper modelMapper;
+    private final ModelMapper modelMapper = new ModelMapper();
     @Value("${greencity.time.after.last.activity}")
     private long timeAfterLastActivity;
+
 
     /**
      * {@inheritDoc}
