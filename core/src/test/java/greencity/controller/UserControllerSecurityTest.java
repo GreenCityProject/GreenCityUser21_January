@@ -1,8 +1,8 @@
 package greencity.controller;
 
+import greencity.config.SecurityConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
-import greencity.config.SecurityConfig;
 import greencity.dto.language.LanguageVO;
 import greencity.dto.ownsecurity.OwnSecurityVO;
 import greencity.dto.user.UserManagementUpdateDto;
@@ -30,6 +30,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,6 +59,15 @@ public class UserControllerSecurityTest {
 
     @Test
     @WithMockUser(username = "user", roles = "USER")
+    void findUserForManagementByPageForbiddenTest() throws Exception {
+        mvc.perform(get(userLink + "/findUserForManagement")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "ADMIN")
     void getUserByPrincipalOkTest() throws Exception {
         mvc.perform(get(userLink))
                 .andExpect(status().isOk());
@@ -73,6 +87,15 @@ public class UserControllerSecurityTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(userStatusDto)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "ADMIN")
+    void findUserForManagementByPageOkTest() throws Exception {
+        mvc.perform(get(userLink + "/findUserForManagement")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk());
     }
 
     @Test
