@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/email")
@@ -72,8 +73,12 @@ public class EmailController {
      */
     @PostMapping("/sendHabitNotification")
     public ResponseEntity<Object> sendHabitNotification(@RequestBody SendHabitNotification sendHabitNotification) {
-        emailService.sendHabitNotification(sendHabitNotification.getName(), sendHabitNotification.getEmail());
-        return ResponseEntity.status(HttpStatus.OK).build();
+        try {
+            emailService.sendHabitNotification(sendHabitNotification.getName(), sendHabitNotification.getEmail());
+            return ResponseEntity.status(HttpStatus.OK).build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
     }
 
     /**
