@@ -78,7 +78,6 @@ public class UserControllerSecurityTest {
 
         OwnSecurityVO ownSecurity = new OwnSecurityVO();
         ownSecurity.setId(1L);
-        ownSecurity.setPassword("password");
         ownSecurity.setUser(user);
 
         LanguageVO language = new LanguageVO();
