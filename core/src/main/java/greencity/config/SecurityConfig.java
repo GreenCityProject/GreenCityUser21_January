@@ -8,6 +8,7 @@ import greencity.security.filters.AccessTokenAuthenticationFilter;
 import greencity.security.jwt.JwtTool;
 import greencity.security.providers.JwtAuthenticationProvider;
 import greencity.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,16 +20,24 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.InMemoryOAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.OAuth2LoginAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
+
 import java.util.Arrays;
 import java.util.Collections;
+
 import static greencity.constant.AppConstant.*;
 import static jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED;
-import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+import static org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED;
+
 
 /**
  * Config for security.
@@ -36,13 +45,14 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
  * @author Nazar Stasyuk && Yurii Koval
  * @version 1.0
  */
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableGlobalAuthentication
 public class SecurityConfig {
+    private static final String USER_LINK = "/user";
     private final JwtTool jwtTool;
     private final UserService userService;
-    private static final String USER_LINK = "/user";
     private final AuthenticationConfiguration authenticationConfiguration;
 
     /**
@@ -55,6 +65,11 @@ public class SecurityConfig {
         this.jwtTool = jwtTool;
         this.userService = userService;
         this.authenticationConfiguration = authenticationConfiguration;
+    }
+
+    @Bean
+    public OAuth2AuthorizedClientService authorizedClientService(ClientRegistrationRepository clientRegistrationRepository) {
+        return new InMemoryOAuth2AuthorizedClientService(clientRegistrationRepository);
     }
 
     /**
@@ -73,29 +88,35 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.cors(corsCustomizer -> corsCustomizer.configurationSource(request -> {
-            CorsConfiguration config = new CorsConfiguration();
-            config.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
-            config.setAllowedOrigins(Collections.singletonList("http://localhost:4205"));
-            config.setAllowedMethods(
-                    Arrays.asList("GET", "POST", "OPTIONS", "DELETE", "PUT", "PATCH"));
-            config.setAllowedHeaders(
-                    Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Headers",
-                            "X-Requested-With", "Origin", "Content-Type", "Accept", "Authorization"));
-            config.setAllowCredentials(true);
-            config.setAllowedHeaders(Collections.singletonList("*"));
-            config.setMaxAge(3600L);
-            return config;
-        }))
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
+                    config.setAllowedOrigins(Collections.singletonList("http://localhost:4205"));
+                    config.setAllowedMethods(
+                            Arrays.asList("GET", "POST", "OPTIONS", "DELETE", "PUT", "PATCH"));
+                    config.setAllowedHeaders(
+                            Arrays.asList("Access-Control-Allow-Origin", "Access-Control-Allow-Headers",
+                                    "X-Requested-With", "Origin", "Content-Type", "Accept", "Authorization"));
+                    config.setAllowCredentials(true);
+                    config.setAllowedHeaders(Collections.singletonList("*"));
+                    config.setMaxAge(3600L);
+                    return config;
+                }))
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+                .sessionManagement(session -> session.sessionCreationPolicy(IF_REQUIRED))
                 .addFilterBefore(
                         new AccessTokenAuthenticationFilter(jwtTool, authenticationManager(), userService),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(
+                        new AccessTokenAuthenticationFilter(jwtTool, authenticationManager(), userService),
+                        OAuth2LoginAuthenticationFilter.class
+                )
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint((req, resp, exc) -> resp.sendError(
                                 SC_UNAUTHORIZED, "Authorize first."))
                         .accessDeniedHandler(new CustomAccessDeniedHandler()))
                 .authorizeHttpRequests(req -> req
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/oauth2/success").permitAll()
                         .requestMatchers("/static/css/**", "/static/img/**", "/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(
@@ -219,7 +240,14 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers(HttpMethod.PUT, "/user/user-rating")
                         .hasAnyRole(ADMIN, MODERATOR, EMPLOYEE, UBS_EMPLOYEE, USER)
-                        .anyRequest().hasAnyRole(ADMIN));
+                        .anyRequest().hasAnyRole(ADMIN))
+                .oauth2Login(oauth2 -> oauth2
+                        .loginPage("/oauth2/authorization/google")
+                        .successHandler((req, resp, auth) -> {
+                            req.getSession().setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
+                            resp.sendRedirect("/oauth2/success");
+                        })
+                );
         return http.build();
     }
 
