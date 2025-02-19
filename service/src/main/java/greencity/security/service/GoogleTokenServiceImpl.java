@@ -1,12 +1,10 @@
 package greencity.security.service;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.http.*;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.gson.Gson;
-import greencity.security.service.GoogleTokenService;
 import io.jsonwebtoken.io.IOException;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;

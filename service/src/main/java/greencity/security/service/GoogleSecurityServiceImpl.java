@@ -5,7 +5,6 @@ import greencity.entity.Language;
 import greencity.entity.User;
 import greencity.enums.EmailNotification;
 import greencity.enums.Role;
-
 import greencity.enums.UserStatus;
 import greencity.repository.UserRepo;
 import greencity.security.jwt.JwtTool;
@@ -20,10 +19,10 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class GoogleSecurityServiceImpl implements GoogleSecurityService {
+    private static final Double DEFAULT_RATING = 0.0;
     private final UserRepo userRepo;
     private final ModelMapper modelMapper;
     private final JwtTool jwtTool;
-    private static final Double DEFAULT_RATING = 0.0;
 
     @Override
     public UserVO createNewGoogleUser(String email, String name, String picture, String language) {
